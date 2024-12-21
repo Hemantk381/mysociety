@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  ToastAndroid,
 } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { Picker } from "@react-native-picker/picker";
@@ -134,27 +133,21 @@ export default function RegistrationScreen({ navigation }) {
     try {
       const response = await axios.post(`${apiUrl}/api/register`, formData);
       if (response.status === 200) {
-        ToastAndroid.showWithGravity(
-          "Registration successful!",
-          ToastAndroid.LONG,
-          ToastAndroid.CENTER
-        );
+        Alert.alert("Success", "Registration successful!");
         navigation.navigate("Login");
       } else {
-        ToastAndroid.showWithGravity(
-          response.data.message || "Registration failed. Please try again.",
-          ToastAndroid.LONG,
-          ToastAndroid.CENTER
+        Alert.alert(
+          "Error",
+          response.data.message || "Registration failed. Please try again."
         );
       }
     } catch (error) {
       console.error(error);
-      ToastAndroid.showWithGravity(
+      Alert.alert(
+        "Error",
         error.response
           ? error.response.data.message
-          : "An error occurred. Please try again.",
-        ToastAndroid.LONG,
-        ToastAndroid.CENTER
+          : "An error occurred. Please try again."
       );
     }
   };
