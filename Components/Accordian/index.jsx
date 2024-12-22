@@ -13,7 +13,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import axios from "axios";
 
 const Accordion = ({ title, userId }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [blockData, setBlockData] = useState([]);
   const [heightAnim] = useState(new Animated.Value(0)); // Animation for the accordion content
   const apiUrl = config.API_URL;
