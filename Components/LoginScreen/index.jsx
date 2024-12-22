@@ -161,6 +161,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   banner: {
+    marginTop: -10,
     width: 100, // Set the width of the circular image
     height: 100, // Set the height of the circular image
     borderRadius: 50, // Half of the width/height to make it circular
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
     paddingTop: 5,
     paddingBottom: 20,
     fontWeight: "bold",
-    marginBottom: 8,
+    marginBottom: 20,
     textAlign: "center",
     color: "#343a40",
   },
