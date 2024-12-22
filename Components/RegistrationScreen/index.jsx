@@ -81,34 +81,41 @@ export default function RegistrationScreen({ navigation }) {
       [fieldName]: value,
     }));
 
-    validateField(fieldName, value);
+    validateField(fieldName, value); // Perform real-time validation
   };
 
   const validateField = (fieldName, value) => {
     let error = "";
 
-    if (fieldName === "name" && !value.trim()) {
-      error = "Name is required";
-    }
-
-    if (fieldName === "mobile") {
-      if (!value.trim()) {
-        error = "Mobile number is required";
-      } else if (!/^[0-9]{10}$/.test(value)) {
-        error = "Enter a valid 10-digit mobile number";
-      }
-    }
-
-    if (fieldName === "password") {
-      if (!value.trim()) {
-        error = "Password is required";
-      } else if (value.length < 6) {
-        error = "Password must be at least 6 characters long";
-      }
-    }
-
-    if (fieldName === "flat_no" && !value.trim()) {
-      error = "Flat number is required";
+    switch (fieldName) {
+      case "name":
+        if (!value.trim()) error = "Name is required";
+        break;
+      case "mobile":
+        if (!value.trim()) {
+          error = "Mobile number is required";
+        } else if (!/^[0-9]{10}$/.test(value)) {
+          error = "Enter a valid 10-digit mobile number";
+        }
+        break;
+      case "password":
+        if (!value.trim()) {
+          error = "Password is required";
+        } else if (value.length < 6) {
+          error = "Password must be at least 6 characters long";
+        }
+        break;
+      case "society_id":
+        if (!value) error = "Society selection is required";
+        break;
+      case "building_id":
+        if (!value) error = "Building selection is required";
+        break;
+      case "flat_no":
+        if (!value.trim()) error = "Flat number is required";
+        break;
+      default:
+        break;
     }
 
     setErrors((prevErrors) => ({ ...prevErrors, [fieldName]: error }));
@@ -125,10 +132,18 @@ export default function RegistrationScreen({ navigation }) {
   };
 
   const handleRegister = async () => {
-    const isFormValid = Object.keys(formData).every((field) =>
-      validateField(field, formData[field])
-    );
-    if (!isFormValid) return;
+    const fieldsToValidate = Object.keys(formData);
+    let isValid = true;
+
+    fieldsToValidate.forEach((field) => {
+      const isFieldValid = validateField(field, formData[field]);
+      if (!isFieldValid) isValid = false;
+    });
+
+    if (!isValid) {
+      Alert.alert("Error", "Please fill all required fields correctly.");
+      return;
+    }
 
     try {
       const response = await axios.post(`${apiUrl}/api/register`, formData);
@@ -161,7 +176,8 @@ export default function RegistrationScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create an Account</Text>
+      <Text style={styles.title}>Getting Started</Text>
+      <Text style={styles.para}>Create an account to continue!</Text>
 
       <TextInput
         style={[styles.input, errors.name && styles.inputError]}
@@ -176,8 +192,12 @@ export default function RegistrationScreen({ navigation }) {
         style={[styles.input, errors.mobile && styles.inputError]}
         placeholder="Mobile Number"
         placeholderTextColor="#999"
+        maxLength={10}
         value={formData.mobile}
-        onChangeText={(value) => handleChange(value, "mobile")}
+        onChangeText={(value) => {
+          const numericValue = value.replace(/[^0-9]/g, ""); // Remove non-numeric characters
+          handleChange(numericValue, "mobile");
+        }}
         keyboardType="phone-pad"
       />
       {renderError("mobile")}
@@ -201,7 +221,11 @@ export default function RegistrationScreen({ navigation }) {
             onValueChange={handleSocietyChange}
             style={styles.picker}
           >
-            <Picker.Item label="Select Society" value="" />
+            <Picker.Item
+              label="Select Society/Office"
+              value=""
+              style={{ fontSize: "10px" }}
+            />
             {societies.map((society) => (
               <Picker.Item
                 key={society.id}
@@ -273,21 +297,29 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   title: {
-    fontSize: 32,
+    fontSize: 22,
     fontWeight: "bold",
-    color: "#007BFF",
+    color: "#00000",
     textAlign: "center",
-    marginBottom: 20,
+    marginTop: -10,
+    marginBottom: 8,
+  },
+  para: {
+    fontSize: 12,
+    fontWeight: "semibold",
+    color: "#9CA3AF",
+    textAlign: "center",
+    marginBottom: 35,
   },
   input: {
-    height: 50,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 10,
-    backgroundColor: "#f9f9f9",
-    fontSize: 16,
+    borderColor: "#ced4da",
+    backgroundColor: "#fff",
+    color: "#00000",
+    padding: 12,
+    marginBottom: 12,
+    borderRadius: 6,
+    fontSize: 14,
   },
   inputError: {
     borderColor: "#ff4d4d",
@@ -303,11 +335,18 @@ const styles = StyleSheet.create({
   },
   picker: {
     height: 50,
+    borderWidth: 0,
     width: "100%",
+    borderColor: "#ced4da",
+    padding: 6,
+    borderRadius: 8,
+    fontSize: 14,
     color: "#333",
   },
   button: {
-    backgroundColor: "#007BFF",
+    backgroundColor: "#2D6A4F",
+    padding: 14,
+    borderRadius: 6,
     height: 50,
     borderRadius: 8,
     justifyContent: "center",
@@ -316,8 +355,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 14,
+    fontWeight: "semibold",
   },
   linkButton: {
     marginTop: 20,
@@ -325,12 +364,20 @@ const styles = StyleSheet.create({
   },
   linkButtonText: {
     color: "#007BFF",
-    fontSize: 16,
+    fontSize: 10,
     textDecorationLine: "underline",
   },
+  placeholder: {
+    fontSize: 10, // Change the font size of the placeholder
+    color: "#999", // Change the color of the placeholder
+  },
+  inputError: {
+    borderColor: "#e63946",
+  },
   errorText: {
-    color: "#ff4d4d",
-    fontSize: 14,
-    marginBottom: 5,
+    color: "#e63946",
+    marginBottom: 10,
+    fontSize: 8,
+    marginTop: -8,
   },
 });

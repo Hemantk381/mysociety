@@ -10,7 +10,15 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { View, Text, Image, StyleSheet, Alert, ActivityIndicator, SafeAreaView } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  SafeAreaView,
+} from "react-native";
 import { Provider } from "react-redux";
 import { store } from "@/store";
 import config from "@/config";
@@ -29,7 +37,11 @@ const Drawer = createDrawerNavigator();
 const HomeStack = () => {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 };
@@ -41,9 +53,12 @@ const App = () => {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1 }}>
           <NavigationContainer independent={true}>
-            <Stack.Navigator initialRouteName="Login">
+            <Stack.Navigator initialRouteName="HomeDrawer">
               <Stack.Screen name="Login" component={LoginScreen} />
-              <Stack.Screen name="Registration" component={RegistrationScreen} />
+              <Stack.Screen
+                name="Registration"
+                component={RegistrationScreen}
+              />
               <Stack.Screen name="CardDetails" component={CardDetailsScreen} />
               <Stack.Screen name="Cart" component={CartScreen} />
               <Stack.Screen
@@ -107,15 +122,25 @@ const CustomDrawerContent = (props) => {
     <DrawerContentScrollView {...props}>
       {profileData ? (
         <View style={styles.profileHeader}>
-          <Image source={{ uri: profileData.profile_image }} style={styles.profileImage} />
+          <Image
+            source={{ uri: profileData.profile_image }}
+            style={styles.profileImage}
+          />
           <Text style={styles.profileName}>{profileData.name || "User"}</Text>
-          <Text style={styles.profileName}>{profileData.mobile || "1234567890"}</Text>
+          <Text style={styles.profileName}>
+            {profileData.mobile || "1234567890"}
+          </Text>
         </View>
       ) : (
         <ActivityIndicator size="small" color="#0000ff" style={styles.loader} />
       )}
       <DrawerItemList {...props} />
-      <DrawerItem label="Logout" onPress={handleLogout} labelStyle={styles.logoutLabel} style={styles.logoutButton} />
+      <DrawerItem
+        label="Logout"
+        onPress={handleLogout}
+        labelStyle={styles.logoutLabel}
+        style={styles.logoutButton}
+      />
     </DrawerContentScrollView>
   );
 };
@@ -135,7 +160,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   profileName: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: "bold",
   },
   logoutButton: {

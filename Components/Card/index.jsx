@@ -1,114 +1,106 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React from "react";
+import { View, Text, Image, StyleSheet } from "react-native";
+import { Card, Title, Paragraph } from "react-native-paper";
 
-const Card = ({ data, onPress }) => {
-  if (!data || !data.shop_name || !data.owner_name || !data.logo_url) {
-    return null; 
+const CustomCard = ({
+  data,
+  onPress,
+  style = {},
+  titleStyle = {},
+  paragraphStyle = {},
+  coverStyle = {},
+  showName = true,
+  showMobile = true,
+  customContent = null,
+}) => {
+  if (!data || !data.shop_name || !data.profile_image) {
+    return null;
   }
 
   return (
-    <TouchableOpacity onPress={() => onPress(data)}>
-      <View style={styles.card}>
-        <Image source={{ uri: data.logo_url }} style={styles.logo} />
-        <Text style={styles.tag}>{data.name}</Text>
-
-        <View style={styles.details}>
-          <Text style={styles.ownerName}>Owner: {data.owner_name}</Text>
-          <Text style={styles.description}>{data.shop_name}</Text>
-          <Text style={styles.mobile}>Mobile: {data.mobile}</Text>
-          <Text style={styles.tower}>Tower: {data.tower}</Text>
-        </View>
+    <Card style={[styles.card, style]} onPress={() => onPress(data)}>
+      <View style={styles.imageContainer}>
+        <Card.Cover
+          source={{ uri: data.profile_image }}
+          style={[styles.cardCover, coverStyle]}
+        />
+        {/* Optionally display name over the image */}
+        {showName && (
+          <Text style={[styles.subTitle, styles.nameOverlay]}>{data.name}</Text>
+        )}
       </View>
-    </TouchableOpacity>
+
+      <Card.Content>
+        <Title style={[styles.title, titleStyle]}>{data.shop_name}</Title>
+        <Paragraph style={[styles.paragraphP, paragraphStyle]}>
+          Building: {data.building_id}
+        </Paragraph>
+        <Paragraph style={[styles.paragraph, paragraphStyle]}>
+          Time: {data.open_time} - {data.close_time}
+        </Paragraph>
+
+        {/* Optionally display mobile */}
+        {showMobile && data.mobile && (
+          <Paragraph style={[styles.paragraph, paragraphStyle]}>
+            Mobile: {data.mobile}
+          </Paragraph>
+        )}
+
+        {/* Render any custom content passed as prop */}
+        {customContent}
+      </Card.Content>
+    </Card>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    padding: 20,
-    margin: 10,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.5,
-    elevation: 5,
-    position: 'relative',
+    marginVertical: 10,
+    marginHorizontal: 15,
+    borderRadius: 12,
   },
-  tag: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: '#FF6347',
-    color: 'white',
-    padding: 5,
-    borderRadius: 5,
+  imageContainer: {
+    position: "relative", // To allow absolute positioning of the name over the image
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    overflow: "hidden", // Ensures the image fits within the card bounds
+  },
+  cardCover: {
+    width: "100%", // Ensure the image spans the full width of the card
+    height: 80, // Set your desired height for the image
+  },
+  nameOverlay: {
+    position: "absolute", // Position the name over the image
+    bottom: 5, // Adjust as needed to position the name
+    left: 5, // Adjust the horizontal position
+    fontSize: 10, // Customize the font size as needed
+    fontWeight: "bold",
+    color: "#fff", // Set text color to white (or any contrast color)
+    backgroundColor: "green", // Optional: Add a semi-transparent background to make text more readable
+    padding: 5, // Add padding around the text
+    borderRadius: 5, // Optional: Add rounded corners to the background
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  subTitle: {
     fontSize: 10,
-    fontWeight: 'bold',
+    color: "#777",
+    marginTop: 0,
   },
-  logo: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    marginRight: 20,
+  paragraphP: {
+    marginTop: -5,
+    fontSize: 10,
+    color: "#555",
+    marginVertical: 0,
   },
-  details: {
-    flex: 1,
-    justifyContent: 'center',
-    marginTop: 15,
-  },
-  ownerName: {
-    fontSize: 14,
-    color: '#555',
-  },
-  description: {
-    fontSize: 16,
-    marginVertical: 5,
-  },
-  mobile: {
-    fontSize: 14,
-    color: '#555',
-  },
-  tower: {
-    fontSize: 14,
-    color: '#555',
+  paragraph: {
+    fontSize: 10,
+    color: "#555",
+    marginVertical: 0,
   },
 });
 
-export default Card;
-
-// import React from "react";
-// import { View, Text, Image, TouchableOpacity } from "react-native";
-
-// const Card = ({ data, onPress }) => {
-//   if (!data || !data.shop_name || !data.owner_name || !data.logo_url) {
-//     return null;
-//   }
-
-//   return (
-//     <TouchableOpacity onPress={() => onPress(data)} className="mb-4">
-//       <View className="flex-row p-5 mx-2 bg-white rounded-lg shadow-md">
-//         <Image
-//           source={{ uri: data.logo_url }}
-//           className="w-24 h-24 rounded-lg mr-4"
-//         />
-//         <View className="flex-1 justify-center">
-//           <Text className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">
-//             {data.name}
-//           </Text>
-//           <Text className="text-gray-600 text-sm">Owner: {data.owner_name}</Text>
-//           <Text className="text-lg font-semibold my-1">{data.shop_name}</Text>
-//           <Text className="text-gray-600 text-sm">Mobile: {data.mobile}</Text>
-//           <Text className="text-gray-600 text-sm">Tower: {data.tower}</Text>
-//         </View>
-//       </View>
-//     </TouchableOpacity>
-//   );
-// };
-
-// export default Card;
+export default CustomCard;
