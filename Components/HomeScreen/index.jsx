@@ -5,13 +5,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Accordion from "../Accordian";
 import config from "../../config";
 import { useNavigation } from "@react-navigation/native";
+import { useDispatch } from "react-redux";
+import { setUserId } from "@/store/Slice";
 
 export default function HomeScreen() {
-  const [userName, setUserName] = useState("");
-  const [cardData, setCardData] = useState({});
-  const [currentCardData, setCurrentCardData] = useState();
+  const [userName, setUserName] = useState(null);
+  const [cardData, setCardData] = useState(null);
+
   const animatedValue = new Animated.Value(0); // Initialize animated value
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   const apiUrl = config.API_URL;
 
@@ -22,6 +25,7 @@ export default function HomeScreen() {
         if (UserData) {
           const parsedData = JSON.parse(UserData);
           setUserName(parsedData);
+          dispatch(setUserId({ id: parsedData?.id }));
         }
       } catch (error) {
         console.error("Failed to retrieve user name.", error);
@@ -32,8 +36,6 @@ export default function HomeScreen() {
   }, []);
 
   const fetchCardData = useCallback(async () => {
-    if (!userName.id) return;
-
     try {
       const response = await axios.get(`${apiUrl}/api/get-block`, {
         params: { user_id: userName.id },
@@ -55,11 +57,6 @@ export default function HomeScreen() {
     fetchCardData();
   }, [fetchCardData]);
 
-  // Convert cardData to an array of keys for FlatList rendering
-  const accordionData = Object.keys(cardData)
-    .filter((key) => cardData[key].length > 0) // Filter out empty blocks
-    .map((key) => ({ title: key, data: cardData[key] })); // Create an array of objects with title and data
-
   useEffect(() => {
     const startMarquee = () => {
       animatedValue.setValue(0); // Reset the animated value to 0
@@ -80,19 +77,13 @@ export default function HomeScreen() {
     outputRange: [300, -300],
   });
 
-  const handleCardPress = (cardData) => {
-    setCurrentCardData(cardData);
-    // Pass both currentCardData and userName when navigating
-    navigation.navigate("CardDetails", { currentCardData: cardData, userName });
-  };
-
   return (
     <View style={{ flex: 1, padding: 10 }}>
       {/* <p style={styles.welcome}>{cardData.today_update || "Good Morning"}!</p> */}
       <FlatList
         data={cardData}
         renderItem={({ item }) => (
-          <Accordion title={item.block} userId={userName.id} />
+          <Accordion key={item?.id} title={item.block} userId={userName.id} />
         )}
         keyExtractor={(item) => item.title}
       />

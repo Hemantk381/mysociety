@@ -11,11 +11,16 @@ import Card from "../Card";
 import config from "../../config";
 import Icon from "react-native-vector-icons/Ionicons";
 import axios from "axios";
+import { useNavigation } from "@react-navigation/native";
+import { useDispatch } from "react-redux";
+import { setShopId, shopId } from "@/store/Slice";
 
 const Accordion = ({ title, userId }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [blockData, setBlockData] = useState([]);
   const [heightAnim] = useState(new Animated.Value(0)); // Animation for the accordion content
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
   const apiUrl = config.API_URL;
 
   // Fetch data when userId or accordion is toggled
@@ -52,7 +57,12 @@ const Accordion = ({ title, userId }) => {
   };
 
   const onCardPress = (item) => {
-    console.log("Card pressed:", item);
+    if (!item.id) {
+      console.error("Item ID is missing:", item);
+      return;
+    }
+    dispatch(setShopId({ id: item.id }));
+    navigation.navigate("CardDetails");
   };
 
   // Filter out non-present or empty items
