@@ -8,7 +8,6 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
-  ScrollView,
 } from "react-native";
 import axios from "axios";
 import config from "../../config";
@@ -17,6 +16,7 @@ import { addToCart, removeFromCart, updateQuantity } from "@/store/Slice";
 import { useNavigation } from "@react-navigation/native";
 import ShopDetailsComponent from "./ShopDetailsComponent";
 import CategorySelector from "./CategorySelector";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function CardDetailsScreen() {
   const [detailsData, setDetailsData] = useState([]);
@@ -62,7 +62,7 @@ export default function CardDetailsScreen() {
           user_id: userID,
           shop_id: currentShopId,
           product_category_id:
-            selectedCategories.length > 0 ? selectedCategories?.join(",") : 0,
+            selectedCategories.length > 0 ? selectedCategories?.join(",") : -1,
         },
       });
       if (response.data) {
@@ -101,19 +101,25 @@ export default function CardDetailsScreen() {
     );
   }
 
-  const ProductItem = ({ item }) => {
+  const ProductItem = React.memo(({ item }) => {
     const cartItem = cartItems.find((cartItem) => cartItem.id === item.id);
     const quantity = cartItem ? cartItem.quantity : 1;
 
     const [showQuantityAdjusters, setShowQuantityAdjusters] = useState(false);
 
+    useEffect(() => {
+      if (cartItem) {
+        setShowQuantityAdjusters(true);
+      }
+    }, [cartItem]);
+
     const handleAddToCart = () => {
+      setShowQuantityAdjusters(true);
       if (cartItem) {
         dispatch(updateQuantity({ id: item.id, quantity: quantity + 1 }));
       } else {
         dispatch(addToCart({ ...item, quantity: 1 }));
       }
-      setShowQuantityAdjusters(true); // Show quantity adjusters after adding
     };
 
     const handleUpdateQuantity = (newQuantity) => {
@@ -124,22 +130,22 @@ export default function CardDetailsScreen() {
       }
     };
 
+    useEffect(() => {
+      console.log(showQuantityAdjusters, "showQuantityAdjusters");
+    }, [showQuantityAdjusters]);
+
     return (
       <View style={styles.productCard}>
         <View style={styles.productInfo}>
-          {/* Product Image */}
           <Image
             source={{ uri: item.product_img }}
             style={styles.productImage}
           />
-
-          {/* Product Details */}
           <View style={styles.productDetails}>
             <Text style={styles.productName}>{item.product_name}</Text>
             <Text style={styles.productPrice}>₹{item.price}</Text>
-            <Text style={styles.productPrice}>₹{item.size}</Text>
+            <Text style={styles.productPrice}>Size: {item.size}</Text>
 
-            {/* Show "Add" Button Initially */}
             {!showQuantityAdjusters ? (
               <TouchableOpacity
                 onPress={handleAddToCart}
@@ -148,14 +154,13 @@ export default function CardDetailsScreen() {
                 <Text style={styles.addButtonText}>Add</Text>
               </TouchableOpacity>
             ) : (
-              // Show Quantity Adjusters after clicking "Add"
               <View style={styles.quantityContainer}>
                 <TouchableOpacity
                   onPress={() => handleUpdateQuantity(quantity - 1)}
                   style={[
                     styles.quantityButton,
                     { backgroundColor: "#FF6F61" },
-                  ]} // Red background for "-"
+                  ]}
                 >
                   <Text style={styles.quantityButtonText}>-</Text>
                 </TouchableOpacity>
@@ -163,14 +168,11 @@ export default function CardDetailsScreen() {
                 <Text style={styles.quantityText}>{quantity}</Text>
 
                 <TouchableOpacity
-                  onPress={() => {
-                    handleAddToCart();
-                    handleUpdateQuantity(quantity + 1);
-                  }}
+                  onPress={() => handleUpdateQuantity(quantity + 1)}
                   style={[
                     styles.quantityButton,
                     { backgroundColor: "#4CAF50" },
-                  ]} // Green background for "+"
+                  ]}
                 >
                   <Text style={styles.quantityButtonText}>+</Text>
                 </TouchableOpacity>
@@ -180,7 +182,7 @@ export default function CardDetailsScreen() {
         </View>
       </View>
     );
-  };
+  });
 
   return (
     <>
@@ -190,27 +192,34 @@ export default function CardDetailsScreen() {
         selectedCategories={selectedCategories}
         setSelectedCategories={setSelectedCategories}
       />
+      <div
+        style={{
+          overflowY: "auto",
+          maxHeight: "500px",
+          height: 300,
+          marginTop: "-0",
+        }}
+      >
+        <FlatList
+          data={productData}
+          renderItem={({ item }) => <ProductItem item={item} />}
+          keyExtractor={(item, index) => index.toString()}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No data available</Text>
+            </View>
+          }
+          contentContainerStyle={styles.flatListContainer}
+        />
+      </div>
 
-      <FlatList
-        data={productData}
-        renderItem={({ item }) => <ProductItem item={item} />}
-        keyExtractor={(item, index) => index.toString()}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No data available</Text>
-          </View>
-        }
-        contentContainerStyle={styles.container}
-      />
-
-      {/* Sticky "Go to Cart" Button */}
       <View style={styles.stickyFooter}>
         <TouchableOpacity
           style={styles.gotocart}
           onPress={() => navigation.navigate("Cart")}
         >
           <Text style={{ color: "white", fontWeight: "bold" }}>
-            {totalItems} items | ₹{totalPrice.toFixed(2)}{" "}
+            {totalItems} items | ₹{totalPrice.toFixed(2)}
           </Text>
           <Text style={{ color: "white", fontWeight: "bold" }}>View Cart</Text>
         </TouchableOpacity>
@@ -220,53 +229,30 @@ export default function CardDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  gotocart: {
-    padding: 10,
-    margin: 10,
-    alignItems: "center",
-    backgroundColor: "#007BFF",
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderRadius: 10,
+  flatListContainer: {
+    paddingBottom: 120, // Ensure footer space
   },
-  // quantityContainer: {
-  //   flexDirection: "row",
-  //   alignItems: "center",
-  //   marginTop: 10,
-  //   borderWidth: 1,
-  //   borderColor: "#007BFF",
-  //   borderRadius: 8,
-  //   backgroundColor: "#f0f8ff",
-  //   elevation: 3,
+  // stickyFooter: {
+  //   position: "absolute", // Makes it "stick"
+  //   bottom: 0, // Aligns to the bottom
+  //   left: 0, // Aligns to the left
+  //   right: 0, // Aligns to the right
+  //   backgroundColor: "#000", // Optional: Footer background
+  //   padding: 16, // Optional: Padding for content
   // },
-  quantityButton: {
-    backgroundColor: "#007BFF",
-    borderRadius: 8,
-    padding: 10,
-    marginHorizontal: 10,
-  },
-  quantityText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginHorizontal: 5,
-    paddingHorizontal: 10,
-    color: "#333",
-  },
-  productCard: {
-    width: "100%",
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 10,
-    marginVertical: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 5,
+  // gotocart: {
+  //   alignItems: "center",
+  //   justifyContent: "center",
+  //   padding: 10,
+  //   backgroundColor: "#FF6F61", // Example color
+  //   borderRadius: 5, // Optional styling
+  // },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   productCard: {
-    width: "100%",
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 10,
@@ -300,19 +286,18 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   quantityContainer: {
-    marginTop: 2,
     flexDirection: "row",
-    width: 130,
-    display: "flex",
-    justifyContent: "flex-end",
     alignItems: "center",
+    display: "flex",
+    marginTop: 10,
     borderWidth: 1,
     borderColor: "#007BFF",
+    width: 140,
     borderRadius: 8,
     backgroundColor: "#f0f8ff",
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    padding: 5,
   },
+
   quantityButton: {
     backgroundColor: "#007BFF", // Default blue background
     borderRadius: 50, // Circular buttons

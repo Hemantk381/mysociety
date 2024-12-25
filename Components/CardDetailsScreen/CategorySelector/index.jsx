@@ -53,7 +53,7 @@ export default CategorySelector;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexGrow: 40,
+    flexGrow: 0.3,
     marginTop: 6,
     justifyContent: "center",
     alignItems: "center",
