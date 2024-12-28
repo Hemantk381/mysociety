@@ -48,3 +48,45 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+
+<!-- Using EAS Build
+Install EAS CLI:
+
+bash
+Copy code
+npm install -g eas-cli
+Login to Expo:
+
+bash
+Copy code
+eas login
+Configure EAS: Initialize your project for EAS Build:
+
+bash
+Copy code
+eas build:configure
+Build the APK: Run the following command to build an APK:
+
+bash
+Copy code
+eas build --platform android -->
+
+
+
+
+
+<!-- Using Legacy Expo Build
+Run the Build Command:
+
+bash
+Copy code
+expo build:android -->
+
+
+
+
+build check
+<!-- npx expo-doctor -->
+ build create
+ <!-- eas build --platform android   -->

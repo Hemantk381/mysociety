@@ -31,6 +31,8 @@ export default function CardDetailsScreen() {
   const currentShopId = useSelector((state) => state.cartData.shopId);
   const userID = useSelector((state) => state.cartData.userId);
 
+  console.log(cartItems, "cartitem");
+
   const fetchCardData = useCallback(async () => {
     setLoading(true);
     try {
@@ -102,37 +104,85 @@ export default function CardDetailsScreen() {
   }
 
   const ProductItem = React.memo(({ item }) => {
+    const cartItems = useSelector((state) => state.cartData.items);
     const cartItem = cartItems.find((cartItem) => cartItem.id === item.id);
-    const quantity = cartItem ? cartItem.quantity : 1;
+    const quantity = cartItem ? cartItem.quantity : 0; // Ensure quantity reflects the current state
 
     const [showQuantityAdjusters, setShowQuantityAdjusters] = useState(false);
 
     useEffect(() => {
-      if (cartItem) {
-        setShowQuantityAdjusters(true);
-      }
+      setShowQuantityAdjusters(Boolean(cartItem)); // Adjusters are shown if the item is in the cart
     }, [cartItem]);
 
-    const handleAddToCart = () => {
+    const handleAddToCart = async () => {
       setShowQuantityAdjusters(true);
       if (cartItem) {
-        dispatch(updateQuantity({ id: item.id, quantity: quantity + 1 }));
+        const updatedQuantity = quantity + 1;
+        dispatch(updateQuantity({ id: item.id, quantity: updatedQuantity })); // Optimistic update
+
+        try {
+          await axios.post(`${apiUrl}/api/addToCart`, {
+            user_id: userID,
+            product_id: item.id,
+            quantity: updatedQuantity,
+            shop_id: currentShopId,
+          });
+        } catch (error) {
+          console.error(error.response ? error.response.data : error.message);
+          Alert.alert("Error", "Failed to update the cart");
+          dispatch(updateQuantity({ id: item.id, quantity: quantity })); // Rollback in case of error
+        }
       } else {
-        dispatch(addToCart({ ...item, quantity: 1 }));
+        dispatch(addToCart({ ...item, quantity: 1 })); // Optimistic update
+
+        try {
+          await axios.post(`${apiUrl}/api/addToCart`, {
+            user_id: userID,
+            shop_id: currentShopId,
+            product_id: item.id,
+            quantity: 1,
+          });
+        } catch (error) {
+          console.error(error.response ? error.response.data : error.message);
+          Alert.alert("Error", "Failed to update the cart");
+          dispatch(removeFromCart({ id: item.id })); // Rollback in case of error
+        }
       }
     };
+    const handleUpdateQuantity = async (newQuantity) => {
+      if (newQuantity <= 0) {
+        dispatch(removeFromCart(item)); // Optimistic update
+        setShowQuantityAdjusters(false);
+      }
+      // try {
+      //   await axios.post(`${apiUrl}/api/removeFromCart`, {
+      //     user_id: userID,
+      //     product_id: item.id,
+      //     shop_id: currentShopId,
+      //   });
+      // } catch (error) {
+      //   console.error(error.response ? error.response.data : error.message);
+      //   Alert.alert("Error", "Failed to update the cart");
+      //   dispatch(addToCart({ ...item, quantity })); // Rollback
+      //   setShowQuantityAdjusters(true);
+      // }
+      // } else {
 
-    const handleUpdateQuantity = (newQuantity) => {
-      if (newQuantity > 0) {
-        dispatch(updateQuantity({ id: item.id, quantity: newQuantity }));
-      } else {
-        dispatch(removeFromCart(item));
+      dispatch(updateQuantity({ id: item.id, quantity: newQuantity })); // Optimistic update
+
+      try {
+        await axios.post(`${apiUrl}/api/addToCart`, {
+          user_id: userID,
+          product_id: item.id,
+          quantity: newQuantity,
+          shop_id: currentShopId,
+        });
+      } catch (error) {
+        console.error(error.response ? error.response.data : error.message);
+        Alert.alert("Error", "Failed to update the cart");
+        dispatch(updateQuantity({ id: item.id, quantity: quantity })); // Rollback
       }
     };
-
-    useEffect(() => {
-      console.log(showQuantityAdjusters, "showQuantityAdjusters");
-    }, [showQuantityAdjusters]);
 
     return (
       <View style={styles.productCard}>
@@ -318,6 +368,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   addButton: {
+    width: 140,
     marginTop: 10,
     backgroundColor: "#28a745", // Green color for Add button
     paddingVertical: 5,
