@@ -12,49 +12,51 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons"; // Added this import
-import { FontAwesome5 } from "@expo/vector-icons"; // Added this import
+import { MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
+import { useSelector } from "react-redux";
+import { FlatList } from "react-native-gesture-handler";
+import { useFocusEffect } from "@react-navigation/native";
 
 const OrderHistoryScreen = () => {
-  const [profileData, setProfileData] = useState(null);
+  const [order_history, setOrder_history] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState(null);
+
+  const userID = useSelector((state) => state.cartData.userId);
 
   const apiUrl = config.API_URL;
-
-  useEffect(() => {
-    const getUserIdFromStorage = async () => {
-      try {
-        const userData = await AsyncStorage.getItem("currentUserData");
-        if (userData) {
-          const parsedData = JSON.parse(userData);
-          setUserId(parsedData.id);
-        }
-      } catch (error) {
-        console.error("Failed to retrieve user ID.", error);
-      }
-    };
-
-    getUserIdFromStorage();
-  }, []);
-
-  useEffect(() => {
-    if (userId) fetchProfile();
-  }, [userId]);
 
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${apiUrl}/api/order_history`, {
-        params: { id: userId },
-      });
-      setProfileData(response.data.data);
+      const response = await axios.post(
+        `${apiUrl}/api/order_history`,
+        { user_id: userID },
+        {
+          headers: {
+            "Content-Type": "application/json", // Set the content type to JSON
+          },
+        }
+      );
+      setOrder_history(response.data.data);
     } catch (error) {
+      setOrder_history([]);
       Alert.alert("Error", "An error occurred while fetching profile details.");
     } finally {
       setLoading(false);
     }
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchProfile();
+    }, [])
+  );
+
+  useEffect(() => {
+    console.log("test");
+  }, []); // Ensures the API call on navigation
+  console.log("test");
 
   if (loading) {
     return (
@@ -64,135 +66,174 @@ const OrderHistoryScreen = () => {
     );
   }
 
-  if (!profileData) {
+  if (!order_history) {
     return (
       <View style={styles.loaderContainer}>
         <Text style={{ fontSize: 16, color: "#8A8A8A" }}>
-          No profile data available.
+          No order data available.
         </Text>
       </View>
     );
   }
 
+  const renderOrderDetails = (details) => (
+    <View>
+      {details.map((item) => (
+        <View style={styles.productCard} key={item.product_id}>
+          <Image
+            source={{ uri: item.product_image }}
+            style={styles.productImage}
+          />
+          <View style={styles.productDetails}>
+            <Text style={styles.productName}>{item.product_name}</Text>
+            <Text style={styles.productQty}>Qty: {item.qty}</Text>
+            <Text style={styles.productPrice}>Price: ₹{item.price}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+
+  const renderOrderCard = ({ item }) => (
+    <View style={styles.orderCard}>
+      <View style={styles.headerRow}>
+        <MaterialIcons name="storefront" size={24} color="#4A90E2" />
+        <Text style={styles.shopName}>{item.shop_name}</Text>
+      </View>
+      <View style={styles.orderDetailsRow}>
+        <Text style={styles.orderId}>Order ID: {item.order_id}</Text>
+        <Text style={styles.transactionDate}>{item.transaction_date}</Text>
+      </View>
+      <View style={styles.amountStatusRow}>
+        <Text style={styles.totalAmount}>Total: ₹{item.total_amt}</Text>
+        <Text
+          style={[
+            styles.status,
+            item.status === "Delivered"
+              ? styles.statusDelivered
+              : styles.statusPending,
+          ]}
+        >
+          {item.status}
+        </Text>
+      </View>
+      <View style={styles.divider} />
+      {renderOrderDetails(item.order_details)}
+    </View>
+  );
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.profileSection}>
-        <Image
-          source={{
-            uri:
-              profileData.profile_image ||
-              "https://png.pngtree.com/png-vector/20221231/ourmid/pngtree-adoption-and-community-society-logo-solidarity-vector-png-image_43732886.jpg",
-          }}
-          style={styles.profileImage}
-        />
-        <Text style={styles.name}>{profileData.name}</Text>
-        <Text style={styles.email}>{profileData.email}</Text>
-      </View>
-
-      <View style={styles.infoSection}>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Mobile Number</Text>
-          <Text style={styles.value}>{profileData.mobile || "N/A"}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Society/Office Name</Text>
-          <Text style={styles.value}>{profileData.society_name || "N/A"}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Block</Text>
-          <Text style={styles.value}>{profileData.building_name || "N/A"}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Flat No</Text>
-          <Text style={styles.value}>{profileData.flat_no || "N/A"}</Text>
-        </View>
-      </View>
-
-      <TouchableOpacity style={styles.editButton}>
-        <Text style={styles.editButtonText}>Edit</Text>
-      </TouchableOpacity>
+    <ScrollView style={styles.container}>
+      <FlatList
+        data={order_history}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderOrderCard}
+      />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    padding: 20,
+    backgroundColor: "#F5F5F5",
   },
   loaderContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#F5F5F5",
   },
-  profileSection: {
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderColor: "orange", // Specify the color directly
-    borderWidth: 1, // Set the width of the border
-    marginBottom: 15,
-  },
-
-  name: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FF3D00",
-  },
-  email: {
-    fontSize: 14,
-    color: "#8A8A8A",
-  },
-  infoSection: {
-    marginTop: 20,
-    width: "100%",
-    backgroundColor: "#F9F9F9",
+  orderCard: {
+    backgroundColor: "#FFFFFF",
+    margin: 10,
     borderRadius: 12,
     padding: 15,
-    marginBottom: 20,
-    elevation: 1,
+    elevation: 4,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    marginBottom: 60,
+    shadowRadius: 5,
   },
-  infoRow: {
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 10,
   },
-  label: {
-    flex: 1,
-    marginLeft: 5,
-    fontSize: 13,
-    color: "#8A8A8A",
+  shopName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginLeft: 8,
   },
-  value: {
-    fontSize: 13,
+  orderDetailsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  orderId: {
+    fontSize: 14,
+    color: "#666",
+  },
+  transactionDate: {
+    fontSize: 14,
+    color: "#666",
+  },
+  amountStatusRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  totalAmount: {
+    fontSize: 16,
+    fontWeight: "bold",
     color: "#000",
   },
-  editButton: {
-    backgroundColor: "#FF3D00",
-    borderRadius: 25,
-    paddingVertical: 12,
-    paddingHorizontal: 50,
-    alignItems: "center",
-    shadowColor: "#FF3D00",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  editButtonText: {
-    fontSize: 12,
-    color: "#FFFFFF",
+  status: {
+    fontSize: 14,
     fontWeight: "bold",
+  },
+  statusDelivered: {
+    color: "#4CAF50",
+  },
+  statusPending: {
+    color: "#FF5733",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#E0E0E0",
+    marginVertical: 10,
+  },
+  productCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    backgroundColor: "#FAFAFA",
+    borderRadius: 8,
+    padding: 10,
+  },
+  productImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  productDetails: {
+    flex: 1,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  productQty: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 4,
+  },
+  productPrice: {
+    fontSize: 12,
+    color: "#333",
+    marginTop: 4,
   },
 });
 

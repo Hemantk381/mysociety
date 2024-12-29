@@ -79,12 +79,23 @@ const App = () => {
 const HomeDrawer = () => {
   return (
     <Drawer.Navigator
-      initialRouteName="Home"
       drawerContent={(props) => <CustomDrawerContent {...props} />}
     >
-      <Drawer.Screen name="Home" component={HomeStack} />
-      <Drawer.Screen name="Profile" component={ProfileScreen} />
-      <Drawer.Screen name="Orders" component={OrderHistoryScreen} />
+      <Drawer.Screen
+        name="Home"
+        component={HomeStack}
+        options={{ unmountOnBlur: true }}
+      />
+      <Drawer.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ unmountOnBlur: true }}
+      />
+      <Drawer.Screen
+        name="Orders"
+        component={OrderHistoryScreen}
+        options={{ unmountOnBlur: true }}
+      />
     </Drawer.Navigator>
   );
 };
@@ -95,10 +106,11 @@ const CustomDrawerContent = (props) => {
   const apiUrl = config.API_URL;
 
   useEffect(() => {
+    let isMounted = true;
     const fetchUserData = async () => {
       try {
         const userData = await AsyncStorage.getItem("currentUserData");
-        if (userData) {
+        if (userData && isMounted) {
           const parsedData = JSON.parse(userData);
           const response = await axios.get(`${apiUrl}/api/get-profile`, {
             params: { id: parsedData.id },
@@ -110,10 +122,14 @@ const CustomDrawerContent = (props) => {
       }
     };
     fetchUserData();
-  }, []);
+    return () => {
+      isMounted = false;
+    };
+  }, [apiUrl]);
 
   const handleLogout = async () => {
     try {
+      await AsyncStorage.clear();
       props.navigation.replace("Login");
     } catch (error) {
       Alert.alert("Error", "An error occurred during logout.");
@@ -125,7 +141,10 @@ const CustomDrawerContent = (props) => {
       {profileData ? (
         <View style={styles.profileHeader}>
           <Image
-            source={{ uri: profileData.profile_image }}
+            source={{
+              uri:
+                profileData?.profile_image || "https://via.placeholder.com/80",
+            }}
             style={styles.profileImage}
           />
           <Text style={styles.profileName}>{profileData.name || "User"}</Text>
@@ -134,7 +153,7 @@ const CustomDrawerContent = (props) => {
           </Text>
         </View>
       ) : (
-        <ActivityIndicator size="small" color="#0000ff" style={styles.loader} />
+        <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
       )}
       <DrawerItemList {...props} />
       <DrawerItem
