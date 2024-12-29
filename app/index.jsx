@@ -30,6 +30,7 @@ import HomeScreen from "@/Components/HomeScreen";
 import ProfileScreen from "@/Components/ProfileScreen";
 import CardDetailsScreen from "@/Components/CardDetailsScreen";
 import CartScreen from "@/Components/CartScreen";
+import OrderHistoryScreen from "@/Components/OrderHistory";
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -83,6 +84,7 @@ const HomeDrawer = () => {
     >
       <Drawer.Screen name="Home" component={HomeStack} />
       <Drawer.Screen name="Profile" component={ProfileScreen} />
+      <Drawer.Screen name="Orders" component={OrderHistoryScreen} />
     </Drawer.Navigator>
   );
 };

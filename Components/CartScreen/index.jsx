@@ -13,7 +13,8 @@ import {
 import axios from "axios";
 import config from "../../config";
 import { useSelector, useDispatch } from "react-redux";
-import { removeFromCart, updateQuantity } from "@/store/Slice";
+import { addToCart, removeFromCart, updateQuantity } from "@/store/Slice";
+import { useNavigation } from "@react-navigation/native";
 
 export default function CartScreen() {
   const currentShopId = useSelector((state) => state.cartData.shopId);
@@ -22,16 +23,9 @@ export default function CartScreen() {
   const [totalAmountDetails, setTotalAmountDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
+  const navigation = useNavigation();
 
   const apiUrl = config.API_URL;
-
-  const handleUpdateQuantity = (item, quantity) => {
-    if (quantity <= 0) {
-      dispatch(removeFromCart(item));
-    } else {
-      dispatch(updateQuantity({ id: item.id, quantity }));
-    }
-  };
 
   const fetchListData = useCallback(async () => {
     setLoading(true);
@@ -43,6 +37,7 @@ export default function CartScreen() {
         },
       });
       setCartDetails(response.data?.data || []);
+      // dispatch(addToCart([]));
     } catch (error) {
       console.error(error.response ? error.response.data : error.message);
       setCartDetails([]);
@@ -54,6 +49,15 @@ export default function CartScreen() {
   useEffect(() => {
     fetchListData();
   }, [fetchListData]);
+
+  useEffect(() => {
+    if (cartDetails?.length > 0) {
+      const inital = cartDetails?.filter((item) => item.quantity !== null);
+
+      inital?.map((item) => dispatch(addToCart(item))); // Optimistic update
+    }
+    // dispatch(addToCart({ ...item, quantity: 1 })); // Optimistic update
+  }, [cartDetails]);
 
   const fetchCartAmount = useCallback(async () => {
     setLoading(true);
@@ -87,43 +91,89 @@ export default function CartScreen() {
         },
       });
       fetchListData();
+      fetchCartAmount();
     } catch (error) {
       console.error(error.response ? error.response.data : error.message);
     }
   };
 
-  const renderCartItem = ({ item }) => (
-    <View style={styles.cartItem}>
-      <Image source={{ uri: item.product_image }} style={styles.productImage} />
-      <View style={styles.cartItemDetails}>
-        <Text style={styles.cartItemName}>{item.product_name}</Text>
-        <Text style={styles.cartItemSubtext}>Spicy chicken</Text>
-        <Text style={styles.cartItemPrice}>{item.price.toFixed(2)}</Text>
-      </View>
-      <View style={styles.quantityControls}>
+  const PenderCartItem = React.memo(({ item }) => {
+    const cartItems = useSelector((state) => state.cartData.items);
+    const cartItem = cartItems.find((cartItem) => cartItem.id === item.id);
+    const quantity = cartItem ? cartItem.quantity : 0; // Ensure quantity reflects the current state
+
+    const handleUpdateQuantity = async (newQuantity) => {
+      if (newQuantity <= 0) {
+        dispatch(removeFromCart(item)); // Optimistic update
+      }
+      dispatch(updateQuantity({ id: item.id, quantity: newQuantity })); // Optimistic update
+
+      try {
+        await axios.post(`${apiUrl}/api/addToCart`, {
+          user_id: userID,
+          product_id: item.id,
+          quantity: newQuantity,
+          shop_id: currentShopId,
+        });
+        fetchCartAmount();
+      } catch (error) {
+        console.error(error.response ? error.response.data : error.message);
+        Alert.alert("Error", "Failed to update the cart");
+        dispatch(updateQuantity({ id: item.id, quantity: quantity })); // Rollback
+      }
+    };
+    return (
+      <View style={styles.cartItem}>
+        <Image
+          source={{ uri: item.product_image }}
+          style={styles.productImage}
+        />
+        <View style={styles.cartItemDetails}>
+          <Text style={styles.cartItemName}>{item.product_name}</Text>
+          <Text style={styles.cartItemSubtext}>Spicy chicken</Text>
+          <Text style={styles.cartItemPrice}>{item.price.toFixed(2)}</Text>
+        </View>
+        <View style={styles.quantityContainer}>
+          <TouchableOpacity
+            onPress={() => handleUpdateQuantity(quantity - 1)}
+            style={[styles.quantityButton, { backgroundColor: "#FF6F61" }]}
+          >
+            <Text style={styles.quantityButtonText}>-</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.quantityText}>{quantity}</Text>
+
+          <TouchableOpacity
+            onPress={() => handleUpdateQuantity(quantity + 1)}
+            style={[styles.quantityButton, { backgroundColor: "#4CAF50" }]}
+          >
+            <Text style={styles.quantityButtonText}>+</Text>
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity
-          onPress={() => handleUpdateQuantity(item, item.quantity - 1)}
-          style={styles.quantityButton}
+          onPress={() => handelDeleteProduct(item)}
+          style={styles.removeButton}
         >
-          <Text style={styles.quantityButtonText}>-</Text>
-        </TouchableOpacity>
-        <Text style={styles.cartItemQuantity}>{item.quantity}</Text>
-        <TouchableOpacity
-          onPress={() => handleUpdateQuantity(item, item.quantity + 1)}
-          style={styles.quantityButton}
-        >
-          <Text style={styles.quantityButtonText}>+</Text>
+          <Text style={styles.removeButtonText}>×</Text>
         </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        onPress={() => handelDeleteProduct(item)}
-        style={styles.removeButton}
-      >
-        <Text style={styles.removeButtonText}>×</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  });
   console.log(totalAmountDetails, "totalAmountDetails");
+
+  const handelPlaceOrder = async () => {
+    // navigation.navigate("Orders");
+    try {
+      await axios.post(`${apiUrl}/api/order`, {
+        user_id: userID,
+        shop_id: currentShopId,
+      });
+      navigation.navigate("Orders");
+      // fetchListData();
+    } catch (error) {
+      console.error(error.response ? error.response.data : error.message);
+    }
+  };
   return (
     <View style={styles.container}>
       {loading ? (
@@ -136,36 +186,42 @@ export default function CartScreen() {
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <FlatList
             data={cartDetails}
-            renderItem={renderCartItem}
-            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => <PenderCartItem item={item} />}
+            keyExtractor={(item) => item.id}
             contentContainerStyle={styles.cartList}
           />
 
           <View style={styles.summaryContainer}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>27.30</Text>
+              <Text style={styles.summaryValue}>
+                {totalAmountDetails?.amout_breakup?.sub_total}
+              </Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Tax and Fees</Text>
-              <Text style={styles.summaryValue}>5.30</Text>
+              <Text style={styles.summaryValue}>
+                {totalAmountDetails?.amout_breakup?.tax}
+              </Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Delivery</Text>
-              <Text style={styles.summaryValue}>1.00</Text>
+              <Text style={styles.summaryValue}>
+                {totalAmountDetails?.amout_breakup?.delivery_charge}
+              </Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, styles.totalLabel]}>
                 Total
               </Text>
               <Text style={[styles.summaryValue, styles.totalValue]}>
-                {totalAmountDetails?.total_amount | 0}
+                {totalAmountDetails?.amout_breakup?.total_amount}
               </Text>
             </View>
             <View style={{ marginTop: 10 }}>
               <Text>Deliver to :</Text>
               <Text style={{ marginTop: 4 }}>
-                c2 305 suncity avinew sector -76
+                {`${totalAmountDetails?.userAddress?.flat_no} ${totalAmountDetails?.userAddress?.building_name} ${totalAmountDetails?.userAddress?.society_name}`}
               </Text>
             </View>
           </View>
@@ -175,7 +231,7 @@ export default function CartScreen() {
       <View style={styles.stickyFooter}>
         <TouchableOpacity
           style={styles.gotocart}
-          // onPress={() => navigation.navigate("Cart")}
+          onPress={() => handelPlaceOrder()}
         >
           <Text style={{ color: "white", fontWeight: "bold" }}>
             {/* {totalItems} items | ₹{totalPrice.toFixed(2)} */}

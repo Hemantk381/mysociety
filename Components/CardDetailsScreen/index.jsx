@@ -56,6 +56,16 @@ export default function CardDetailsScreen() {
     fetchCardData();
   }, [fetchCardData]);
 
+  useEffect(() => {
+    if (productData?.length > 0) {
+      const inital = productData?.filter((item) => item.quantity !== null);
+
+      console.log(productData, "sddsjjds");
+      inital?.map((item) => dispatch(addToCart(item))); // Optimistic update
+    }
+    // dispatch(addToCart({ ...item, quantity: 1 })); // Optimistic update
+  }, [productData]);
+
   const fetchListData = useCallback(async () => {
     setLoading(true);
     try {
@@ -107,6 +117,8 @@ export default function CardDetailsScreen() {
     const cartItems = useSelector((state) => state.cartData.items);
     const cartItem = cartItems.find((cartItem) => cartItem.id === item.id);
     const quantity = cartItem ? cartItem.quantity : 0; // Ensure quantity reflects the current state
+
+    console.log(cartItems, "qunety");
 
     const [showQuantityAdjusters, setShowQuantityAdjusters] = useState(false);
 
@@ -196,7 +208,7 @@ export default function CardDetailsScreen() {
             <Text style={styles.productPrice}>₹{item.price}</Text>
             <Text style={styles.productPrice}>Size: {item.size}</Text>
 
-            {!showQuantityAdjusters ? (
+            {!showQuantityAdjusters && quantity !== null ? (
               <TouchableOpacity
                 onPress={handleAddToCart}
                 style={styles.addButton}
@@ -266,7 +278,10 @@ export default function CardDetailsScreen() {
       <View style={styles.stickyFooter}>
         <TouchableOpacity
           style={styles.gotocart}
-          onPress={() => navigation.navigate("Cart")}
+          onPress={() => {
+            // dispatch(addToCart([]));
+            navigation.navigate("Cart");
+          }}
         >
           <Text style={{ color: "white", fontWeight: "bold" }}>
             {totalItems} items | ₹{totalPrice.toFixed(2)}
