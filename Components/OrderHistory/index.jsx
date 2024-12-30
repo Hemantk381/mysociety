@@ -25,7 +25,6 @@ const OrderHistoryScreen = () => {
   const userID = useSelector((state) => state.cartData.userId);
 
   const apiUrl = config.API_URL;
-
   const fetchProfile = async () => {
     setLoading(true);
     try {
@@ -34,7 +33,8 @@ const OrderHistoryScreen = () => {
         { user_id: userID },
         {
           headers: {
-            "Content-Type": "application/json", // Set the content type to JSON
+            "Content-Type": "application/json",
+            Accept: "application/json",
           },
         }
       );
