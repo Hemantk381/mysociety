@@ -79,13 +79,16 @@ export default function CardDetailsScreen() {
       });
       if (response.data) {
         setProductData(response?.data?.data);
+        setLoading(false);
       } else {
         Alert.alert("Error", "Failed to fetch shop details");
         setProductData([]);
+        setLoading(false);
       }
     } catch (error) {
       setProductData([]);
       console.error(error.response ? error.response.data : error.message);
+      setLoading(false);
       Alert.alert("Error", "An error occurred while fetching shop details");
     } finally {
       setLoading(false);
@@ -104,14 +107,6 @@ export default function CardDetailsScreen() {
     (total, item) => total + item.price * item.quantity,
     0
   );
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
 
   const ProductItem = React.memo(({ item }) => {
     const cartItems = useSelector((state) => state.cartData.items);
@@ -259,20 +254,28 @@ export default function CardDetailsScreen() {
           overflowY: "auto",
           maxHeight: "500px",
           height: 300,
-          marginTop: "-0",
+          marginTop: "10px",
+          scrollbarWidth: "none", // For Firefox
+          msOverflowStyle: "none", // For IE and Edge
         }}
       >
-        <FlatList
-          data={productData}
-          renderItem={({ item }) => <ProductItem item={item} />}
-          keyExtractor={(item, index) => index.toString()}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No data available</Text>
-            </View>
-          }
-          contentContainerStyle={styles.flatListContainer}
-        />
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#0000ff" />
+          </View>
+        ) : (
+          <FlatList
+            data={productData}
+            renderItem={({ item }) => <ProductItem item={item} />}
+            keyExtractor={(item, index) => index.toString()}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No data available</Text>
+              </View>
+            }
+            contentContainerStyle={styles.flatListContainer}
+          />
+        )}
       </div>
 
       <View style={styles.stickyFooter}>
@@ -295,7 +298,7 @@ export default function CardDetailsScreen() {
 
 const styles = StyleSheet.create({
   flatListContainer: {
-    paddingBottom: 120, // Ensure footer space
+    // paddingBottom: 120, // Ensure footer space
   },
   // stickyFooter: {
   //   position: "absolute", // Makes it "stick"
@@ -315,17 +318,19 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
+    paddingTop: 60,
     alignItems: "center",
   },
   productCard: {
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 10,
+    margin: 13,
     marginVertical: 10,
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 10,
-    shadowOffset: { width: 0, height: 2 },
+    // shadowOffset: { width: 0, height: 2 },
     elevation: 5,
   },
   productInfo: {
@@ -342,22 +347,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   productName: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: "bold",
   },
   productPrice: {
-    fontSize: 14,
-    color: "#007BFF",
-    marginVertical: 5,
+    fontSize: 12,
+    color: "#219C90",
+    marginTop: 4,
+    // marginVertical: 5,
   },
   quantityContainer: {
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
     display: "flex",
     marginTop: 10,
     borderWidth: 1,
     borderColor: "#007BFF",
-    width: 140,
+    width: 120,
     borderRadius: 8,
     backgroundColor: "#f0f8ff",
     padding: 5,
@@ -366,24 +373,25 @@ const styles = StyleSheet.create({
   quantityButton: {
     backgroundColor: "#007BFF", // Default blue background
     borderRadius: 50, // Circular buttons
-    width: 30,
-    height: 30,
+    width: 20,
+    height: 20,
     justifyContent: "center",
     alignItems: "center",
     marginHorizontal: 10,
   },
   quantityButtonText: {
+    display: "flex",
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 18,
+    fontSize: 12,
   },
   quantityText: {
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: "bold",
     color: "#333",
   },
   addButton: {
-    width: 140,
+    width: 120,
     marginTop: 10,
     backgroundColor: "#28a745", // Green color for Add button
     paddingVertical: 5,
@@ -392,6 +400,8 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: "#fff",
+    fontSize: 10,
+    padding: 3,
     fontWeight: "bold",
   },
   container: {
@@ -409,7 +419,7 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 12,
     color: "#888",
   },
   stickyFooter: {
@@ -418,9 +428,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1000,
-    padding: 10,
     backgroundColor: "#fff",
-    borderTopWidth: 1,
     borderTopColor: "#ddd",
     // Ensure it stays above the content
     elevation: 10,
@@ -429,7 +437,7 @@ const styles = StyleSheet.create({
     padding: 10,
     margin: 10,
     alignItems: "center",
-    backgroundColor: "#007BFF",
+    backgroundColor: "#FF748B",
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",

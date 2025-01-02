@@ -52,12 +52,13 @@ export default CategorySelector;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    flexGrow: 0.3,
-    marginTop: 6,
+    // flex: 1,
+    // flexGrow: 1,
+    marginTop: 10,
+
     justifyContent: "center",
     alignItems: "center",
-    height: "10px",
+
     // marginBottom: 30,
   },
   categoryList: {
@@ -69,19 +70,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 8, // Space between buttons
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
+    // borderColor: "#EF5A6F",
     justifyContent: "center", // Align text vertically
     alignItems: "center", // Align text horizontally
     paddingVertical: 10, // Adjust the padding for a minimal appearance
     height: 30,
   },
   selectedCategory: {
-    backgroundColor: "#3498db", // Selected button color
-    borderColor: "#3498db",
+    backgroundColor: "#EF5A6F", // Selected button color
+    // borderColor: "#3498db",
     height: 30,
   },
   categoryText: {
-    fontSize: 14, // Font size
+    fontSize: 12, // Font size
     color: "white", // Text color
     fontWeight: "600",
     textAlign: "center", // Center text

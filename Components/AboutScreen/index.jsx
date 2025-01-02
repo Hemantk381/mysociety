@@ -1,11 +1,11 @@
 // Card.js
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 
 const AboutScreen = () => {
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Chandan</Text>
+      <Text style={styles.title}></Text>
       <Text>Enginner </Text>
     </View>
   );
@@ -15,9 +15,9 @@ const styles = StyleSheet.create({
   card: {
     padding: 20,
     margin: 10,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 

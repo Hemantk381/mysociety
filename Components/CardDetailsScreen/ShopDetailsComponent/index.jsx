@@ -29,6 +29,9 @@ const ShopDetailsComponent = ({ details }) => {
             style={styles.icon}
           />
         </div>
+        <Text style={styles.shopWoner}>
+          Seller : {details?.dd || "Sirajul"}
+        </Text>
       </View>
     </View>
   );
@@ -39,6 +42,7 @@ const styles = StyleSheet.create({
     padding: 0,
     backgroundColor: "#f7f7f7",
     marginBottom: 10,
+    borderRadius: 15,
   },
   profileImage: {
     width: "100%", // Adjust as needed
@@ -50,6 +54,12 @@ const styles = StyleSheet.create({
   shopName: {
     fontSize: 14,
     fontWeight: "bold",
+    color: "#2c3e50",
+  },
+  shopWoner: {
+    fontSize: 10,
+    marginTop: 4,
+    fontWeight: "medium",
     color: "#2c3e50",
   },
   detailsContainer: {
