@@ -11,10 +11,12 @@ import {
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import config from "../../config";
+import ForgotScreen from "../ForgotScreen";
 
 export default function LoginScreen({ navigation }) {
   const [data, setData] = useState({ mobile: "", password: "" });
   const [errors, setErrors] = useState({});
+  const [forgot, setForgot] = useState(false);
 
   const apiUrl = config.API_URL;
 
@@ -96,53 +98,68 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.outside}>
-        <Image
-          source={
-            "https://png.pngtree.com/png-vector/20221231/ourmid/pngtree-adoption-and-community-society-logo-solidarity-vector-png-image_43732886.jpg"
-          }
-          style={styles.banner}
-        />
-      </View>
+      {forgot ? (
+        <ForgotScreen setForgot={setForgot} />
+      ) : (
+        <View>
+          <View style={styles.outside}>
+            <Image
+              source={
+                "https://png.pngtree.com/png-vector/20221231/ourmid/pngtree-adoption-and-community-society-logo-solidarity-vector-png-image_43732886.jpg"
+              }
+              style={styles.banner}
+            />
+          </View>
 
-      <Text style={styles.title}>My Society</Text>
+          <Text style={styles.title}>My Society</Text>
 
-      <TextInput
-        style={[styles.input, errors.mobile && styles.inputError]}
-        placeholder="Mobile Number"
-        maxLength={10}
-        value={data.mobile}
-        onChangeText={(value) => {
-          // Only allow numeric input
-          const numericValue = value.replace(/[^0-9]/g, ""); // Remove non-numeric characters
-          handleChange(numericValue, "mobile");
-        }}
-        keyboardType="phone-pad" // Ensure the number pad is shown
-      />
+          <TextInput
+            style={[styles.input, errors.mobile && styles.inputError]}
+            placeholder="Mobile Number"
+            maxLength={10}
+            value={data.mobile}
+            onChangeText={(value) => {
+              // Only allow numeric input
+              const numericValue = value.replace(/[^0-9]/g, ""); // Remove non-numeric characters
+              handleChange(numericValue, "mobile");
+            }}
+            keyboardType="phone-pad" // Ensure the number pad is shown
+          />
 
-      {renderError("mobile")}
+          {renderError("mobile")}
 
-      <TextInput
-        style={[styles.input, errors.password && styles.inputError]}
-        placeholder="Password"
-        value={data.password}
-        onChangeText={(value) => handleChange(value, "password")}
-        secureTextEntry
-      />
-      {renderError("password")}
+          <TextInput
+            style={[styles.input, errors.password && styles.inputError]}
+            placeholder="Password"
+            value={data.password}
+            onChangeText={(value) => handleChange(value, "password")}
+            secureTextEntry
+          />
+          {renderError("password")}
+          <TouchableOpacity
+            style={styles.forgotPassword}
+            onPress={() => {
+              setForgot(true);
+              console.log("Forgot Password pressed");
+            }}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Login</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.linkButton}
-        onPress={() => navigation.navigate("Registration")}
-      >
-        <Text style={styles.linkButtonText}>
-          Don't have an account? Register
-        </Text>
-      </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.linkButton}
+            onPress={() => navigation.navigate("Registration")}
+          >
+            <Text style={styles.linkButtonText}>
+              Don't have an account? Register
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -227,5 +244,15 @@ const styles = StyleSheet.create({
     color: "#007BFF",
     textAlign: "center",
     fontSize: 10,
+  },
+  forgotPassword: {
+    fontSize: 10,
+    color: "#007BFF",
+    textAlign: "right",
+  },
+  forgotPasswordText: {
+    fontSize: 10,
+    color: "#007BFF",
+    textAlign: "right",
   },
 });

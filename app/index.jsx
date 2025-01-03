@@ -31,6 +31,8 @@ import ProfileScreen from "@/Components/ProfileScreen";
 import CardDetailsScreen from "@/Components/CardDetailsScreen";
 import CartScreen from "@/Components/CartScreen";
 import OrderHistoryScreen from "@/Components/OrderHistory";
+import ChangePassword from "@/Components/ChangePassword";
+import ForgotScreen from "@/Components/ForgotScreen";
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -54,7 +56,7 @@ const App = () => {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1 }}>
           <NavigationContainer independent={true}>
-            <Stack.Navigator initialRouteName="HomeDrawer">
+            <Stack.Navigator initialRouteName="Login">
               <Stack.Screen name="Login" component={LoginScreen} />
               <Stack.Screen
                 name="Registration"
@@ -94,6 +96,11 @@ const HomeDrawer = () => {
       <Drawer.Screen
         name="Orders"
         component={OrderHistoryScreen}
+        options={{ unmountOnBlur: true }}
+      />
+      <Drawer.Screen
+        name="Change password"
+        component={ChangePassword}
         options={{ unmountOnBlur: true }}
       />
     </Drawer.Navigator>
