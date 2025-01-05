@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import config from "../../config";
 import ForgotScreen from "../ForgotScreen";
+import DeviceInfo from "react-native-device-info";
+import { Platform } from "react-native";
 
 export default function LoginScreen({ navigation }) {
   const [data, setData] = useState({ mobile: "", password: "" });
@@ -48,9 +50,54 @@ export default function LoginScreen({ navigation }) {
     const isPasswordValid = validateField("password", data.password);
 
     if (!isMobileValid || !isPasswordValid) return;
+    let deviceData = null;
+    if (Platform.OS === "web") {
+      // Handle web-specific information
+      const userAgent = navigator.userAgent; // Example: You can get browser info from the user agent
+      let deviceType = "Unknown";
+      let deviceName = "Unknown";
 
+      if (/iPhone/.test(userAgent)) {
+        deviceType = "iOS";
+        deviceName = "iPhone";
+      } else if (/iPad/.test(userAgent)) {
+        deviceType = "iOS";
+        deviceName = "iPad";
+      } else if (/Android/.test(userAgent)) {
+        deviceType = "Android";
+        deviceName = "Android Device";
+      } else if (/Windows/.test(userAgent)) {
+        deviceType = "Windows";
+        deviceName = "Windows PC";
+      } else if (/Mac/.test(userAgent)) {
+        deviceType = "MacOS";
+        deviceName = "Mac Device";
+      }
+
+      // Generate a pseudo-unique ID for web
+      const deviceId = `web-${Math.random().toString(36).substr(2, 9)}`;
+      deviceData = {
+        deviceId: deviceId,
+        deviceName: deviceName,
+        deviceType: deviceType,
+        mobile: data.mobile,
+        password: data.password,
+      };
+    } else {
+      // Fetch device information for iOS/Android
+      const deviceId = await DeviceInfo.getUniqueId(); // Device unique ID
+      const deviceName = await DeviceInfo.getDeviceName(); // Device name
+      const deviceType = await DeviceInfo.getSystemName(); // iOS or Android
+      deviceData = {
+        deviceId: deviceId,
+        deviceName: deviceName,
+        deviceType: deviceType,
+        mobile: data.mobile,
+        password: data.password,
+      };
+    }
     try {
-      const response = await axios.post(`${apiUrl}/api/login`, data);
+      const response = await axios.post(`${apiUrl}/api/login`, deviceData);
       if (response.status === 200) {
         window.alert("Success", "Login successful!");
         await AsyncStorage.setItem(
