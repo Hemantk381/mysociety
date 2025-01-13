@@ -14,14 +14,16 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { FlatList } from "react-native-gesture-handler";
 import { useFocusEffect } from "@react-navigation/native";
+import { clearItemsCart, clearItemsOnCart } from "@/store/Slice";
 
 const OrderHistoryScreen = () => {
   const [order_history, setOrder_history] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const dispatch = useDispatch();
   const userID = useSelector((state) => state.cartData.userId);
 
   const apiUrl = config.API_URL;
@@ -55,8 +57,9 @@ const OrderHistoryScreen = () => {
 
   useEffect(() => {
     console.log("test");
+    dispatch(clearItemsOnCart());
+    dispatch(clearItemsCart());
   }, []); // Ensures the API call on navigation
-  console.log("test");
 
   if (loading) {
     return (

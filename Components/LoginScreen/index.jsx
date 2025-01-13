@@ -99,7 +99,7 @@ export default function LoginScreen({ navigation }) {
     try {
       const response = await axios.post(`${apiUrl}/api/login`, deviceData);
       if (response.status === 200) {
-        window.alert("Success", "Login successful!");
+        // window.alert("Success", "Login successful!");
         await AsyncStorage.setItem(
           "currentUserData",
           JSON.stringify(response.data.user)

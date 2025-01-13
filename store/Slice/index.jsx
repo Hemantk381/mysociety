@@ -4,6 +4,7 @@ const cartSlice = createSlice({
   name: "cartData",
   initialState: {
     items: [],
+    itemsCart: [],
     shopId: null,
     userId: null,
   },
@@ -21,6 +22,7 @@ const cartSlice = createSlice({
     removeFromCart: (state, action) => {
       state.items = state.items.filter((item) => item.id !== action.payload.id);
     },
+
     setShopId: (state, action) => {
       state.shopId = action.payload.id; // Corrected reducer
     },
@@ -38,6 +40,40 @@ const cartSlice = createSlice({
         }
       }
     },
+    addToCartOnCart: (state, action) => {
+      const existingItem = state.itemsCart.find(
+        (item) => item.id === action.payload.id
+      );
+      if (existingItem) {
+        existingItem.quantity += action.payload.quantity;
+      } else {
+        state.itemsCart.push(action.payload);
+      }
+    },
+    removeFromCartOnCart: (state, action) => {
+      state.itemsCart = state.itemsCart.filter(
+        (item) => item.id !== action.payload.id
+      );
+    },
+    updateQuantityOnCart: (state, action) => {
+      const item = state.itemsCart.find(
+        (item) => item.id === action.payload.id
+      );
+      if (item) {
+        item.quantity = action.payload.quantity;
+        if (item.quantity <= 0) {
+          state.itemsCart = state.items.filter(
+            (item) => item.id !== action.payload.id
+          );
+        }
+      }
+    },
+    clearItemsCart: (state) => {
+      state.items = [];
+    },
+    clearItemsOnCart: (state) => {
+      state.itemsCart = [];
+    },
   },
 });
 
@@ -45,9 +81,14 @@ export const {
   addToCart,
   removeFromCart,
   updateQuantity,
+  removeFromCartOnCart,
+  updateQuantityOnCart,
   shopId,
+  addToCartOnCart,
   setShopId,
   setUserId,
+  clearItemsOnCart,
+  clearItemsCart,
   userId,
 } = cartSlice.actions;
 

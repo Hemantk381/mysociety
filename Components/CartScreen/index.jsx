@@ -13,7 +13,12 @@ import {
 import axios from "axios";
 import config from "../../config";
 import { useSelector, useDispatch } from "react-redux";
-import { addToCart, removeFromCart, updateQuantity } from "@/store/Slice";
+import {
+  addToCart,
+  addToCartOnCart,
+  removeFromCartOnCart,
+  updateQuantityOnCart,
+} from "@/store/Slice";
 import { useNavigation } from "@react-navigation/native";
 
 export default function CartScreen() {
@@ -29,6 +34,7 @@ export default function CartScreen() {
 
   const fetchListData = useCallback(async () => {
     setLoading(true);
+
     try {
       const response = await axios.get(`${apiUrl}/api/cartList`, {
         params: {
@@ -37,10 +43,17 @@ export default function CartScreen() {
         },
       });
       setCartDetails(response.data?.data || []);
+      if (response.data?.data?.length > 0) {
+        const inital = response.data?.data?.filter(
+          (item) => item.quantity !== null
+        );
+
+        inital?.map((item) => dispatch(addToCartOnCart(item))); // Optimistic update
+      }
       // dispatch(addToCart([]));
     } catch (error) {
       console.error(error.response ? error.response.data : error.message);
-      setCartDetails([]);
+      dispatch(addToCartOnCart([])); // Optimistic update
     } finally {
       setLoading(false);
     }
@@ -49,15 +62,6 @@ export default function CartScreen() {
   useEffect(() => {
     fetchListData();
   }, [fetchListData]);
-
-  useEffect(() => {
-    if (cartDetails?.length > 0) {
-      const inital = cartDetails?.filter((item) => item.quantity !== null);
-
-      inital?.map((item) => dispatch(addToCart(item))); // Optimistic update
-    }
-    // dispatch(addToCart({ ...item, quantity: 1 })); // Optimistic update
-  }, [cartDetails]);
 
   const fetchCartAmount = useCallback(async () => {
     setLoading(true);
@@ -98,15 +102,15 @@ export default function CartScreen() {
   };
 
   const PenderCartItem = React.memo(({ item }) => {
-    const cartItems = useSelector((state) => state.cartData.items);
+    const cartItems = useSelector((state) => state.cartData.itemsCart);
     const cartItem = cartItems.find((cartItem) => cartItem.id === item.id);
     const quantity = cartItem ? cartItem.quantity : 0; // Ensure quantity reflects the current state
 
     const handleUpdateQuantity = async (newQuantity) => {
       if (newQuantity <= 0) {
-        dispatch(removeFromCart(item)); // Optimistic update
+        dispatch(removeFromCartOnCart(item)); // Optimistic update
       }
-      dispatch(updateQuantity({ id: item.id, quantity: newQuantity })); // Optimistic update
+      dispatch(updateQuantityOnCart({ id: item.id, quantity: newQuantity })); // Optimistic update
 
       try {
         await axios.post(`${apiUrl}/api/addToCart`, {
@@ -119,11 +123,17 @@ export default function CartScreen() {
       } catch (error) {
         console.error(error.response ? error.response.data : error.message);
         Alert.alert("Error", "Failed to update the cart");
-        dispatch(updateQuantity({ id: item.id, quantity: quantity })); // Rollback
+        dispatch(updateQuantityOnCart({ id: item.id, quantity: quantity })); // Rollback
       }
     };
     return (
       <View style={styles.cartItem}>
+        <TouchableOpacity
+          onPress={() => handelDeleteProduct(item)}
+          style={styles.removeButton}
+        >
+          <Text style={styles.removeButtonText}>×</Text>
+        </TouchableOpacity>
         <Image
           source={{ uri: item.product_image }}
           style={styles.productImage}
@@ -133,6 +143,7 @@ export default function CartScreen() {
           <Text style={styles.cartItemSubtext}>Spicy chicken</Text>
           <Text style={styles.cartItemPrice}>{item.price.toFixed(2)}</Text>
         </View>
+
         <View style={styles.quantityContainer}>
           <TouchableOpacity
             onPress={() => handleUpdateQuantity(quantity - 1)}
@@ -150,16 +161,9 @@ export default function CartScreen() {
             <Text style={styles.quantityButtonText}>+</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          onPress={() => handelDeleteProduct(item)}
-          style={styles.removeButton}
-        >
-          <Text style={styles.removeButtonText}>×</Text>
-        </TouchableOpacity>
       </View>
     );
   });
-  console.log(totalAmountDetails, "totalAmountDetails");
 
   const handelPlaceOrder = async () => {
     // navigation.navigate("Orders");
@@ -266,7 +270,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   scrollContainer: {
-    padding: 20,
+    padding: 10,
     marginVertical: 10,
 
     backgroundColor: "#f9f9f9",
@@ -294,6 +298,44 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  quantityButtonText: {
+    display: "flex",
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  quantityText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  addButton: {
+    width: 120,
+    marginTop: 10,
+    backgroundColor: "#28a745", // Green color for Add button
+    paddingVertical: 5,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  addButtonText: {
+    color: "#fff",
+    fontSize: 10,
+    padding: 3,
+    fontWeight: "bold",
+  },
+  quantityContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    display: "flex",
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "#007BFF",
+    width: 120,
+    borderRadius: 8,
+    backgroundColor: "#f0f8ff",
+    padding: 5,
+  },
   productImage: {
     width: 60,
     height: 60,
@@ -304,7 +346,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cartItemName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
   },
   cartItemSubtext: {
@@ -341,7 +383,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   removeButton: {
-    marginLeft: 10,
+    position: "absolute",
+    left: 2,
+    top: 0,
   },
   removeButtonText: {
     fontSize: 20,
